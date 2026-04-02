@@ -1,0 +1,94 @@
+{{- if .Values.vlApi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}
+  labels:
+    {{- include "paddleocr-vl-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: vl-api
+spec:
+  replicas: {{ .Values.vlApi.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "paddleocr-vl-pipeline.vlapi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.vlApi.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "paddleocr-vl-pipeline.labels" . | nindent 8 }}
+        app.kubernetes.io/component: vl-api
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "paddleocr-vl-pipeline.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: vl-api
+          {{- with .Values.vlApi.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.vlApi.image.repository }}:{{ .Values.vlApi.image.tag }}"
+          imagePullPolicy: {{ .Values.vlApi.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.vlApi.service.port }}
+              protocol: TCP
+          env:
+            - name: GOTENBERG_URL
+              value: {{ include "paddleocr-vl-pipeline.gotenberg.url" . | quote }}
+            - name: VLM_SERVER_URL
+              value: {{ .Values.vlApi.pipeline.vlmServerUrl | quote }}
+            - name: VLM_MODEL_NAME
+              value: {{ .Values.vlApi.pipeline.vlmModelName | quote }}
+            - name: LAYOUT_ENABLED
+              value: {{ .Values.vlApi.pipeline.layoutEnabled | quote }}
+            - name: LAYOUT_DEVICE
+              value: {{ .Values.vlApi.pipeline.layoutDevice | quote }}
+            - name: LAYOUT_THRESHOLD
+              value: {{ .Values.vlApi.pipeline.layoutThreshold | quote }}
+            - name: LAYOUT_MODEL_REPO
+              value: {{ .Values.vlApi.pipeline.layoutModelRepo | quote }}
+            - name: LAYOUT_MODEL_FILE
+              value: {{ .Values.vlApi.pipeline.layoutModelFile | quote }}
+            - name: HF_TOKEN
+              value: {{ .Values.vlApi.pipeline.hfToken | quote }}
+            {{- if .Values.vlApi.mlisAuth.enabled }}
+            - name: MLIS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.vlApi.mlisAuth.existingSecret }}
+                  name: {{ .Values.vlApi.mlisAuth.existingSecret }}
+                  key: {{ .Values.vlApi.mlisAuth.existingSecretKey }}
+                  {{- else }}
+                  name: {{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}-mlis-auth
+                  key: api-key
+                  {{- end }}
+            {{- end }}
+          startupProbe:
+            {{- toYaml .Values.vlApi.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.vlApi.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.vlApi.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.vlApi.resources | nindent 12 }}
+      {{- with .Values.vlApi.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.vlApi.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.vlApi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

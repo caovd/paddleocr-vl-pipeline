@@ -1,0 +1,38 @@
+============================================================
+  PaddleOCR-VL Pipeline — Deployed on HPE AIE (PCAI)
+============================================================
+
+Components:
+  - Gotenberg (docx/pptx → PDF):  {{ include "paddleocr-vl-pipeline.gotenberg.fullname" . }}:{{ .Values.gotenberg.service.port }}
+  - PaddleOCR VL API (pipeline):   {{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}:{{ .Values.vlApi.service.port }}
+  - VLM Brain Model:               {{ .Values.vlApi.pipeline.vlmServerUrl }} (MLIS-hosted)
+
+External Endpoint (via Istio VirtualService):
+  https://{{ .Values.ezua.virtualService.endpoint }}
+
+Usage — Convert a DOCX to PDF then OCR:
+
+  1. Convert document to PDF via Gotenberg:
+
+     curl --request POST \
+       http://{{ include "paddleocr-vl-pipeline.gotenberg.fullname" . }}:{{ .Values.gotenberg.service.port }}/forms/libreoffice/convert \
+       --form files=@document.docx \
+       -o document.pdf
+
+  2. Send the PDF to PaddleOCR VL API for OCR:
+
+     curl --request POST \
+       http://{{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}:{{ .Values.vlApi.service.port }}/ocr \
+       --form file=@document.pdf
+
+{{- if .Values.vlApi.mlisAuth.enabled }}
+
+MLIS Authentication:
+  API key is mounted from secret into the VL API pod as MLIS_API_KEY env var.
+{{- end }}
+
+To check pod status:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+To run connectivity tests:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}

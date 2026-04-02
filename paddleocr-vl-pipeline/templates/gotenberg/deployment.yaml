@@ -1,0 +1,61 @@
+{{- if .Values.gotenberg.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "paddleocr-vl-pipeline.gotenberg.fullname" . }}
+  labels:
+    {{- include "paddleocr-vl-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gotenberg
+spec:
+  replicas: {{ .Values.gotenberg.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "paddleocr-vl-pipeline.gotenberg.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.gotenberg.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "paddleocr-vl-pipeline.labels" . | nindent 8 }}
+        app.kubernetes.io/component: gotenberg
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "paddleocr-vl-pipeline.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: gotenberg
+          {{- with .Values.gotenberg.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.gotenberg.image.repository }}:{{ .Values.gotenberg.image.tag }}"
+          imagePullPolicy: {{ .Values.gotenberg.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.gotenberg.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.gotenberg.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.gotenberg.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.gotenberg.resources | nindent 12 }}
+      {{- with .Values.gotenberg.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gotenberg.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gotenberg.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

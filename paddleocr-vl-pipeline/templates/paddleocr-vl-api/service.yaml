@@ -1,0 +1,18 @@
+{{- if .Values.vlApi.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}
+  labels:
+    {{- include "paddleocr-vl-pipeline.labels" . | nindent 4 }}
+    app.kubernetes.io/component: vl-api
+spec:
+  type: {{ .Values.vlApi.service.type }}
+  ports:
+    - port: {{ .Values.vlApi.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "paddleocr-vl-pipeline.vlapi.selectorLabels" . | nindent 4 }}
+{{- end }}

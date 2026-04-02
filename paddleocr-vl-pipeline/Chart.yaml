@@ -1,0 +1,19 @@
+apiVersion: v2
+name: paddleocr-vl-pipeline
+description: >-
+  Headless document OCR pipeline for HPE AIE on PCAI.
+  Converts DOCX/PPTX to PDF via Gotenberg, then extracts structured text
+  via PaddleOCR-VL pipeline backed by an MLIS-hosted VLM endpoint.
+type: application
+version: 0.1.0
+appVersion: "1.5.0"
+keywords:
+  - ocr
+  - paddleocr
+  - gotenberg
+  - document-ai
+  - pcai
+  - aie
+home: https://github.com/PaddlePaddle/PaddleOCR
+maintainers:
+  - name: PCAI Solution Engineering

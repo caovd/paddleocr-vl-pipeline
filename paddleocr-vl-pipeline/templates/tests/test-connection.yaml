@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "paddleocr-vl-pipeline.fullname" . }}-test-connection"
+  labels:
+    {{- include "paddleocr-vl-pipeline.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-vl-api
+      image: "busybox:1.36"
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "=== Testing Gotenberg health ==="
+          wget -qO- http://{{ include "paddleocr-vl-pipeline.gotenberg.fullname" . }}:{{ .Values.gotenberg.service.port }}/health || exit 1
+          echo ""
+          echo "=== Testing VL API connectivity ==="
+          wget -qO- --timeout=10 http://{{ include "paddleocr-vl-pipeline.vlapi.fullname" . }}:{{ .Values.vlApi.service.port }}/health || exit 1
+          echo ""
+          echo "=== All tests passed ==="
