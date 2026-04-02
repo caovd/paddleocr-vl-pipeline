@@ -90,7 +90,7 @@ vlApi:
   affinity: {}
 
   pipeline:
-    vlmServerUrl: "http://<mlis-deployment-name>.<namespace>.svc.cluster.local/v1"
+    vlmServerUrl: "<mlis-model-endpoint>/v1"
     vlmModelName: "PaddlePaddle/PaddleOCR-VL"
     layoutEnabled: true
     layoutDevice: "cpu"
